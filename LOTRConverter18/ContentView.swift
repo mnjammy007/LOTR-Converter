@@ -17,8 +17,8 @@ struct ContentView: View {
     @FocusState var isLeftTyping
     @FocusState var isRightTyping
     
-    @State var leftCurrency: Currency = .silverPenny
-    @State var rightCurrency: Currency = .goldPenny
+    @State var leftCurrency: Currency = Currency(rawValue: UserDefaults.standard.double(forKey: "leftCurrency")) ?? .silverPenny
+    @State var rightCurrency: Currency = Currency(rawValue: UserDefaults.standard.double(forKey: "rightCurrency")) ?? .goldPenny
     
     var body: some View {
         ZStack {
@@ -53,6 +53,7 @@ struct ContentView: View {
                             .textFieldStyle(.roundedBorder)
                             .focused($isLeftTyping)
                             .keyboardType(.decimalPad)
+                            .onSubmit { isLeftTyping = false }
                     }
                     Image(systemName: "equal")
                         .font(.largeTitle)
@@ -77,6 +78,7 @@ struct ContentView: View {
                             .focused($isRightTyping)
                             .multilineTextAlignment(.trailing)
                             .keyboardType(.decimalPad)
+                            .onSubmit { isRightTyping = false }
                     }
                 }
                 .padding()
@@ -93,6 +95,7 @@ struct ContentView: View {
                             .foregroundStyle(.white)
                     }
                     .padding(.trailing)
+                    .padding(.bottom)
                 }
             }
         }
@@ -120,18 +123,28 @@ struct ContentView: View {
                 rightCurrencyAmount,
                 to: leftCurrency
             )
+            UserDefaults.standard.setValue(leftCurrency.rawValue, forKey: "leftCurrency")
         }
         .onChange(of: rightCurrency) {
             rightCurrencyAmount = leftCurrency.connvert(
                 leftCurrencyAmount,
                 to: rightCurrency
             )
+            UserDefaults.standard.setValue(rightCurrency.rawValue, forKey: "rightCurrency")
+        }
+        .onTapGesture {
+            isLeftTyping = false
+            isRightTyping = false
         }
         .sheet(isPresented: $showExchangeInfo){
-            ExchangeInfo()
+            isLeftTyping = false
+            isRightTyping = false
+            return ExchangeInfo()
         }
         .sheet(isPresented: $showSelectCurrency){
-            SelectCurrency(topCurrency: $leftCurrency, bottomCurrency: $rightCurrency)
+            isLeftTyping = false
+            isRightTyping = false
+            return SelectCurrency(topCurrency: $leftCurrency, bottomCurrency: $rightCurrency)
         }
     }
 }
